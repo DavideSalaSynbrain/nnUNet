@@ -29,11 +29,12 @@ def determine_reader_writer_from_dataset_json(dataset_json_content: dict, exampl
         # trying to find that class in the nnunetv2.imageio module
         try:
             ret = recursive_find_reader_writer_by_name(ioclass_name)
-            if verbose: print('Using %s reader/writer' % ret)
+            if verbose: print(f'Using {ret} reader/writer')
             return ret
         except RuntimeError:
-            if verbose: print('Warning: Unable to find ioclass specified in dataset.json: %s' % ioclass_name)
-            if verbose: print('Trying to automatically determine desired class')
+            if verbose:
+                print(f'Warning: Unable to find ioclass specified in dataset.json: {ioclass_name}')
+                print('Trying to automatically determine desired class')
     return determine_reader_writer_from_file_ending(dataset_json_content['file_ending'], example_file,
                                                     allow_nonmatching_filename, verbose)
 
@@ -64,8 +65,9 @@ def determine_reader_writer_from_file_ending(file_ending: str, example_file: str
                     if verbose: print('Using %s as reader/writer' % rw)
                     return rw
                 except:
-                    if verbose: print(f'Failed to open file {example_file} with reader {rw}:')
-                    if verbose: traceback.print_exc()
+                    if verbose:
+                        print(f'Failed to open file {example_file} with reader {rw}:')
+                        traceback.print_exc()
                     pass
     raise RuntimeError("Unable to determine a reader for file ending %s and file %s (file None means no file provided)." % (file_ending, example_file))
 

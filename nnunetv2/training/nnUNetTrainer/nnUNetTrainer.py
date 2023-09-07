@@ -933,7 +933,7 @@ class nnUNetTrainer(object):
         target = target[0]
 
         # the following is needed for online evaluation. Fake dice (green line)
-        axes = [0] + list(range(2, len(output.shape)))
+        axes = [0] + list(range(2, output.ndim))
 
         if self.label_manager.has_regions:
             predicted_segmentation_onehot = (torch.sigmoid(output) > 0.5).long()
@@ -946,9 +946,10 @@ class nnUNetTrainer(object):
 
         if self.label_manager.has_ignore_label:
             if not self.label_manager.has_regions:
-                mask = (target != self.label_manager.ignore_label).float()
+                mask = target == self.label_manager.ignore_label
                 # CAREFUL that you don't rely on target after this line!
-                target[target == self.label_manager.ignore_label] = 0
+                target[mask] = 0
+                mask = mask.logical_not_().to(torch.float32)
             else:
                 mask = 1 - target[:, -1:]
                 # CAREFUL that you don't rely on target after this line!
