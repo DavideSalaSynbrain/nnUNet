@@ -426,7 +426,7 @@ class nnUNetTrainer(object):
             dt_object = datetime.fromtimestamp(timestamp)
 
             if add_timestamp:
-                args = ("%s:" % dt_object, *args)
+                args = (f"{dt_object}:", *args)
 
             successful = False
             max_attempts = 5
