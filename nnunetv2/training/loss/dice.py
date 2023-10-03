@@ -70,32 +70,29 @@ class MemoryEfficientSoftDiceLoss(nn.Module):
         self.ddp = ddp
 
     def forward(self, x, y, loss_mask=None):
-        shp_x, shp_y = x.shape, y.shape
-
         if self.apply_nonlin is not None:
             x = self.apply_nonlin(x)
 
-        if not self.do_bg:
-            x = x[:, 1:]
-
         # make everything shape (b, c)
-        axes = tuple(range(2, len(shp_x)))
-
+        axes = tuple(range(2, x.ndim))
         with torch.no_grad():
-            if len(shp_x) != len(shp_y):
-                shp_y = (shp_y[0], 1, *shp_y[1:])
-                y = y.view(shp_y)
+            if x.ndim != y.ndim:
+                y = y.view((y.shape[0], 1, *y.shape[1:]))
 
-            if shp_x == shp_y:
+            if x.shape == y.shape:
                 # if this is the case then gt is probably already a one hot encoding
                 y_onehot = y
             else:
-                y_onehot = torch.zeros(shp_x, device=x.device, dtype=torch.bool)
+                y_onehot = torch.zeros(x.shape, device=x.device, dtype=torch.bool)
                 y_onehot.scatter_(1, y.long(), 1)
 
             if not self.do_bg:
                 y_onehot = y_onehot[:, 1:]
+
             sum_gt = y_onehot.sum(axes) if loss_mask is None else (y_onehot * loss_mask).sum(axes)
+
+        if not self.do_bg:
+            x = x[:, 1:]
 
         if loss_mask is None:
             intersect = (x * y_onehot).sum(axes)
